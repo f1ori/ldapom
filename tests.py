@@ -67,6 +67,7 @@ class LDAPomTest(LDAPServerMixin, unittest.TestCase):
         entry.objectClass = ["person", "top"]
         entry.sn = "Sören Pequeño"
         entry.cn = "sören.pequeño"
+        entry.givenName = [] # should not be created
         entry.save()
 
         # Verify that the new entry arrived at the server

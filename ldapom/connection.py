@@ -400,14 +400,23 @@ class LDAPConnection(object):
             raise error.LDAPomError("Cannot save without attributes "
                     "previously fetched or set.")
 
+        save_attributes = entry.attributes.copy()
+        entry_exists = entry.exists()
+
         # Temporary attribute set that will contain deleted attributes as
         # LDAPAttribute objects without any values.
-        save_attributes = entry.attributes.copy()
-        deleted_attribute_names = entry._old_attribute_names.difference(
-                [a.name for a in entry.attributes])
-        for name in deleted_attribute_names:
-            attribute_type = self.get_attribute_type(name)
-            save_attributes.add(attribute_type(name))
+        if entry_exists:
+            deleted_attribute_names = entry._old_attribute_names.difference(
+                    [a.name for a in entry.attributes])
+            for name in deleted_attribute_names:
+                attribute_type = self.get_attribute_type(name)
+                save_attributes.add(attribute_type(name))
+
+        # remove empty attributes, as ldap_add_ext_s can't handle them
+        if not entry_exists:
+            save_attributes = set(filter(
+                    lambda attr: len(attr._get_ldap_values())>0,
+                    save_attributes))
 
         # Keep around references to pointers to owned memory with data that is
         # still needed.
@@ -436,7 +445,7 @@ class LDAPConnection(object):
             mods[i] = mod
         mods[len(save_attributes)] = ffi.NULL
 
-        if entry.exists():
+        if entry_exists:
             err = ldap.ldap_modify_ext_s(self._ld,
                     compat._encode_utf8(entry.dn),
                     mods,
