@@ -25,7 +25,7 @@ class LDAPEntry(compat.UnicodeMixin, object):
         super(LDAPEntry, self).__setattr__('attributes', set(attributes)
                 if attributes is not None else None)
         super(LDAPEntry, self).__setattr__('_old_attribute_names',
-                set([a.name for a in attributes]) if attributes else None)
+                set([a.name for a in attributes]) if attributes else set())
 
     ## Expose dn as a ready-only property
     dn = property(lambda self: self._dn)
